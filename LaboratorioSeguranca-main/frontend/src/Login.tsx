@@ -23,6 +23,7 @@ function Login() {
             if(!response.data.success) {
                 setMessage("Erro no login");
             } else {
+                
                 navigate("/dashboard");
             }
         } catch (error: unknown){

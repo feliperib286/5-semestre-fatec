@@ -18,6 +18,7 @@ function Dashboard() {
 
   const [message, setMessage] = useState("");
   const [menuAberto, setMenuAberto] = useState(false);
+  const [tokenCsrf, setTokenCsrf] = useState("");
   const [iptu, setIptu] = useState<Iptuu | null>(null);
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
   const [novoComentario, setNovoComentario] = useState("");
@@ -52,7 +53,7 @@ function Dashboard() {
         }
 
         setUser(response.data.payload);
-
+        setTokenCsrf(response.data.cryptoToken);
 
         const responseIptu = await axios.get<{ iptu: Iptuu[] }>(
           "usuario/iptu-por-usuario",{withCredentials: true}
@@ -101,21 +102,14 @@ function Dashboard() {
 
     try {
 
-      const usuarioStorage = localStorage.getItem("user");
-
-      if (!usuarioStorage) {
-        console.error("Usuário não encontrado");
-        return;
-      }
-
-      const usuario = JSON.parse(usuarioStorage);
-
-
       await axios.post(
         "/comentario",
+        
         {
-          texto: novoComentario,
-          usuarioId: usuario.id
+          headers: {
+            "X-CSRF-Token": tokenCsrf
+        },
+          texto: novoComentario
         }
       );
 

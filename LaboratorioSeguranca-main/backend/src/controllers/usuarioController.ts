@@ -1,29 +1,16 @@
 import { Request, Response } from "express";
 import db from "../database";
 import jwt from "jsonwebtoken";
-import ValidarToken from "../Services/jwtServices";
+import crypto from "crypto";
 
 
 export const payloadUsuario = async (req: Request, res: Response) => {
-    const token = req.cookies.token;
-
-    if (!token) {
-        res.status(401).json({
-            success: false,
-            message: "Token não fornecido"
-        });
-        return;
-    }
-    const payload = ValidarToken(token);
-
-    if(!payload)
-         res.status(401).json({
-            success: false,
-            message: "Token inválido" });
+    
     return res.json({
         success: true,
         message: "Payload do usuário obtido com sucesso",
-        payload: payload
+        payload: res.locals.payload,
+        cryptoToken: res.locals.csrfToken
     });
 };
 
@@ -46,9 +33,13 @@ export const login = async (req: Request, res: Response) => {
                 email: result.rows[0].email,
                 tipo: result.rows[0].tipo_usuario_id
             }, (global as any).segredoJwt);
-        res.cookie("token", token, { httpOnly: true });
+        res.cookie("token", token, { httpOnly: true, sameSite: "strict" });
+
+        const csrfToken = crypto.randomBytes(32).toString("hex");
+        
         res.json({
             success: true,
+            cryptoToken: csrfToken
         });
 
     } else {
@@ -127,22 +118,6 @@ export const novoLogin = async (req: Request, res: Response) => {
 
 
 export const atualizarIptu = async (req: Request, res: Response) => {
-    const token = req.cookies.token;
-    const payload = ValidarToken(token);
-    if (!payload) {
-        res.status(401).json({
-            success: false,
-            message: "Token inválido"
-        });
-        return;
-    }
-    if(payload && payload.tipo !== 1) {
-        res.status(403).json({
-            success: false,
-            message: "Acesso negado. Usuário não é admin"
-        });
-        return;
-    }
     const {
         usuarioId,
         novoValor
@@ -171,25 +146,8 @@ export const atualizarIptu = async (req: Request, res: Response) => {
 
 
 export const getIptuPorIdUsuario = async (req: Request, res: Response) => {
-    const token = req.cookies.token;
-    if (!token) {
-        res.status(401).json({
-            success: false,
-            message: "Token não fornecido"
-        });
-        return;
-    }
-    const payload = ValidarToken(token);
-    if(!payload) {
-        res.status(401).json({
-            success: false,
-            message: "Token inválido"
-        });
-        return;
-    }
-
     const query =
-        `SELECT * FROM iptu WHERE usuario_id = '${payload.id}'`;
+        `SELECT * FROM iptu WHERE usuario_id = '${res.locals.payload.id}'`;
 
     console.log(`Query Executada: ${query}`);
 
