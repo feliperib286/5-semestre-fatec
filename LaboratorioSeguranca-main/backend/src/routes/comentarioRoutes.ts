@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { criarComentario, listarComentarios } from "../controllers/comentarioController";
 import { authMiddleware } from "../middleware/authMiddleware";
-import { csrfTokenMiddleware } from "../middleware/csrfTokenMiddleware";
+import { csrfTokenMiddleware } from "../middleware/verificar_csrf_token";
 
 const router = Router();
 

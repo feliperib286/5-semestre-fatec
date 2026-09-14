@@ -1,13 +1,13 @@
 import { Router } from "express";
 import { login, atualizarIptu, novoLogin, getIptuPorIdUsuario, getQRCodeOrCodBarras, getIptus, payloadUsuario } from "../controllers/usuarioController";
 import { authMiddleware } from "../middleware/authMiddleware";
-import { csrfTokenMiddleware } from "../middleware/csrfTokenMiddleware";
+import { csrfTokenMiddleware } from "../middleware/verificar_csrf_token";
 import { csrfGerarTokenMiddleware as csrfGerarRecuperarTokenMiddleware } from "../middleware/csrfGerarRecuperarTokenMiddleware";
 
 const router = Router();
 
-router.post("/login", csrfGerarRecuperarTokenMiddleware, login);
-router.post("/novo-login", csrfGerarRecuperarTokenMiddleware, novoLogin);
+router.post("/login",  login);
+router.post("/novo-login", novoLogin);
 router.post("/atualizar-iptu", csrfTokenMiddleware, authMiddleware([1, 2]), atualizarIptu);
 router.get("/iptu-por-usuario", csrfTokenMiddleware, authMiddleware([1, 2]), getIptuPorIdUsuario);
 router.get("/payload-usuario",  authMiddleware, csrfGerarRecuperarTokenMiddleware, payloadUsuario);

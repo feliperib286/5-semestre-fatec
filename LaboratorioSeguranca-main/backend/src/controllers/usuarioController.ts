@@ -39,7 +39,7 @@ export const login = async (req: Request, res: Response) => {
         
         res.json({
             success: true,
-            cryptoToken: csrfToken
+            cryptoToken: res.locals.csrfToken
         });
 
     } else {

@@ -100,18 +100,19 @@ function Dashboard() {
     if (!novoComentario.trim()) return;
 
 
-    try {
-
-      await axios.post(
-        "/comentario",
-        
-        {
-          headers: {
-            "X-CSRF-Token": tokenCsrf
+  try {
+    await axios.post(
+      "/comentario",
+      {
+        texto: novoComentario
+      },
+      {
+        headers: {
+          "X-CSRF-Token": tokenCsrf
         },
-          texto: novoComentario
-        }
-      );
+        withCredentials: true
+      }
+    );
 
 
       const response = await axios.get(
