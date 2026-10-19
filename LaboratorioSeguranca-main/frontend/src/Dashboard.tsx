@@ -18,7 +18,6 @@ function Dashboard() {
 
   const [message, setMessage] = useState("");
   const [menuAberto, setMenuAberto] = useState(false);
-  const [tokenCsrf, setTokenCsrf] = useState("");
   const [iptu, setIptu] = useState<Iptuu | null>(null);
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
   const [novoComentario, setNovoComentario] = useState("");
@@ -42,24 +41,29 @@ function Dashboard() {
     const buscarDados = async () => {
 
       try {
-        const response = await axios.get(
-          "/usuario/payload-usuario",
-          { withCredentials: true }
-        );
-        
-        if (!response.data.success) {
+
+        const usuarioStorage = localStorage.getItem("user");
+
+        if (!usuarioStorage) {
           console.error("Usuário não encontrado no localStorage");
           return;
         }
 
-        setUser(response.data.payload);
-        setTokenCsrf(response.data.cryptoToken);
+        const usuario = JSON.parse(usuarioStorage);
 
-        const responseIptu = await axios.get<{ iptu: Iptuu[] }>(
-          "usuario/iptu-por-usuario",{withCredentials: true}
+        console.log("Usuário recuperado do storage:", usuario);
+
+        setUser(usuario);
+
+
+        const response = await axios.post<{ iptu: Iptuu[] }>(
+          "usuario/iptu-por-usuario",
+          {
+            usuarioId: usuario.id
+          }
         );
 
-        setIptu(responseIptu.data.iptu[0]);
+        setIptu(response.data.iptu[0]);
 
       } catch (error) {
 
@@ -100,19 +104,25 @@ function Dashboard() {
     if (!novoComentario.trim()) return;
 
 
-  try {
-    await axios.post(
-      "/comentario",
-      {
-        texto: novoComentario
-      },
-      {
-        headers: {
-          "X-CSRF-Token": tokenCsrf
-        },
-        withCredentials: true
+    try {
+
+      const usuarioStorage = localStorage.getItem("user");
+
+      if (!usuarioStorage) {
+        console.error("Usuário não encontrado");
+        return;
       }
-    );
+
+      const usuario = JSON.parse(usuarioStorage);
+
+
+      await axios.post(
+        "/comentario",
+        {
+          texto: novoComentario,
+          usuarioId: usuario.id
+        }
+      );
 
 
       const response = await axios.get(
@@ -302,9 +312,10 @@ function Dashboard() {
                     O conteúdo vindo do banco é interpretado
                     como HTML pelo navegador.
                   */}
-                  {comentario.texto}
                   <div
-                    
+                    dangerouslySetInnerHTML={{
+                      __html: comentario.texto
+                    }}
                   />
 
                 </div>

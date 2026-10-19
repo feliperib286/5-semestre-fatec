@@ -15,15 +15,17 @@ function Login() {
         e.preventDefault();
 
         try {
+            // CORREÇÃO: URL completa apontando para a porta 3000 e withCredentials habilitado
             const response = await axios.post(
-                "/usuario/login",
-                { email, password }, {withCredentials: true}
+                "http://localhost:3000/usuario/login",
+                { email, password },
+                { withCredentials: true } 
             );
 
             if(!response.data.success) {
                 setMessage("Erro no login");
             } else {
-                
+                localStorage.setItem("user", JSON.stringify(response.data.user));
                 navigate("/dashboard");
             }
         } catch (error: unknown){
@@ -31,7 +33,12 @@ function Login() {
                 setMessage("Você excedeu o número de tentativas. Tente novamente em 15 minutos.");
                 return;
             }
-            setMessage("Erro no login");
+            // Exibe a mensagem de erro que vem do backend (se existir)
+            if (axios.isAxiosError(error) && error.response?.data?.erro) {
+                setMessage(error.response.data.erro);
+            } else {
+                setMessage("Erro no login");
+            }
         }
     };
 
@@ -39,20 +46,26 @@ function Login() {
         e.preventDefault();
 
         try {
-            
+            // CORREÇÃO: URL completa apontando para a porta 3000 e withCredentials habilitado
             const response = await axios.post(
-                "/usuario/novo-login",
-                { email, password, nome }
+                "http://localhost:3000/usuario/novo-login",
+                { email, password, nome },
+                { withCredentials: true }
             );
             
             if (response.data.success) {
                 setMessage("Usuário criado com sucesso!");
                 setIsRegistering(false);
             }
-        } catch {
-            setMessage("Erro no cadastro");
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error) && error.response?.data?.erro) {
+                setMessage(error.response.data.erro);
+            } else {
+                setMessage("Erro no cadastro");
+            }
         }
     };
+
     return (
         <div style={styles.container}>
             <h1>{isRegistering ? "Criar Conta" : "Login"}</h1>

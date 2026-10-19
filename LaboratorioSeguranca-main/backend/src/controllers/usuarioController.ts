@@ -1,226 +1,58 @@
-import { Request, Response } from "express";
-import db from "../database";
-import jwt from "jsonwebtoken";
-import crypto from "crypto";
+import { Request, Response } from 'express';
+import pool from '../database';
+import { jwtService } from '../Services/jwtServices';
 
+export const loginUsuario = async (req: Request, res: Response) => {
+  const { email, password } = req.body;
 
-export const payloadUsuario = async (req: Request, res: Response) => {
-    
-    return res.json({
-        success: true,
-        message: "Payload do usuário obtido com sucesso",
-        payload: res.locals.payload,
-        cryptoToken: res.locals.csrfToken
+  try {
+    const query = 'SELECT id, nome, email FROM usuarios WHERE email = $1 AND senha = $2';
+    const result = await pool.query(query, [email, password]);
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ success: false, erro: 'Credenciais inválidas' });
+    }
+
+    const usuario = result.rows[0];
+    const token = jwtService.gerarToken({ id: usuario.id, nome: usuario.nome });
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 3600000
     });
+
+    return res.json({ success: true, user: { id: usuario.id, nome: usuario.nome } });
+  } catch (erro) {
+    return res.status(500).json({ success: false, erro: 'Erro interno do servidor' });
+  }
 };
 
+export const registrarUsuario = async (req: Request, res: Response) => {
+  const { nome, email, password } = req.body;
 
-export const login = async (req: Request, res: Response) => {
-    const { email, password } = req.body;
+  try {
+    const checkQuery = 'SELECT id FROM usuarios WHERE email = $1';
+    const checkResult = await pool.query(checkQuery, [email]);
     
-    const query =
-        `SELECT * FROM usuario WHERE email = $1 AND senha = $2`;
-
-    console.log(`Query Executada: ${query}`);
-
-    const result = await db.query(query, [email, password]);
-
-    if (result.rowCount && result.rowCount > 0) {
-        const token = jwt.sign(
-            {
-                id: result.rows[0].id,
-                nome: result.rows[0].nome,
-                email: result.rows[0].email,
-                tipo: result.rows[0].tipo_usuario_id
-            }, (global as any).segredoJwt);
-        res.cookie("token", token, { httpOnly: true, sameSite: "strict" });
-
-        const csrfToken = crypto.randomBytes(32).toString("hex");
-        
-        res.json({
-            success: true,
-            cryptoToken: res.locals.csrfToken
-        });
-
-    } else {
-        res.status(401).json({
-            success: false,
-            message: "Falha no login"
-        });
-    }
-};
-
-
-export const novoLogin = async (req: Request, res: Response) => {
-    const { email, password, nome } = req.body;
-
-    const queryNomeIpuExiste =
-        `SELECT * FROM iptu WHERE nome = '${nome}'`;
-
-    console.log(`Query Executada: ${queryNomeIpuExiste}`);
-
-    const iptuResult = await db.query(queryNomeIpuExiste);
-
-    if (iptuResult.rowCount && iptuResult.rowCount > 0) {
-
-        const query =
-            `INSERT INTO usuario (email, senha, nome, tipo_usuario_id)
-             VALUES ('${email}', '${password}', '${nome}', 3)`;
-
-        console.log(`Query Executada: ${query}`);
-
-        const result = await db.query(query);
-
-        const queryIdUsuario =
-            `SELECT id FROM usuario
-             WHERE email = '${email}' AND senha = '${password}'`;
-
-        console.log(`Query Executada: ${queryIdUsuario}`);
-
-        const resultIdUsuario = await db.query(queryIdUsuario);
-
-        const queryUpdateTabelaIptu =
-            `UPDATE iptu
-             SET usuario_id = '${resultIdUsuario.rows[0].id}'
-             WHERE nome = '${nome}'`;
-
-        console.log(`Query Executada: ${queryUpdateTabelaIptu}`);
-
-        const resultUpdate = await db.query(queryUpdateTabelaIptu);
-
-        if (
-            result.rowCount &&
-            result.rowCount > 0 &&
-            resultUpdate.rowCount &&
-            resultUpdate.rowCount > 0
-        ) {
-
-            res.json({
-            success: true,
-            user: result.rows[0]
-        
-            });
-
-        } else {
-            res.status(401).json({
-                success: false,
-                message: "Falha no login"
-            });
-        }
-
-    } else {
-        res.status(404).json({
-            success: false,
-            message: `Nome '${nome}' não encontrado no cadastro de municipes`
-        });
-    }
-};
-
-
-export const atualizarIptu = async (req: Request, res: Response) => {
-    const {
-        usuarioId,
-        novoValor
-    } = req.body;
-
-    const query =
-        `UPDATE iptu
-         SET valor = '${novoValor}'
-         WHERE usuario_id = '${usuarioId}'`;
-
-    console.log(`Query Executada: ${query}`);
-
-    try {
-        await db.query(query);
-
-        res.json({
-            message: "IPTU atualizado"
-        });
-
-    } catch (err: any) {
-        res.status(500).json({
-            error: err.message
-        });
-    }
-};
-
-
-export const getIptuPorIdUsuario = async (req: Request, res: Response) => {
-    const query =
-        `SELECT * FROM iptu WHERE usuario_id = '${res.locals.payload.id}'`;
-
-    console.log(`Query Executada: ${query}`);
-
-    try {
-
-        const result = await db.query(query);
-
-        console.log(`Retorno: ${JSON.stringify(result.rows)}`);
-
-        res.json({
-            iptu: result.rows
-        });
-
-    } catch (err: any) {
-
-        res.status(500).json({
-            error: err.message
-        });
-    }
-};
-
-
-export const getIptus = async (
-    req: Request,
-    res: Response
-) => {
-
-    
-    const query = `SELECT * FROM iptu`;
-
-    console.log(`Query Executada: ${query}`);
-
-    try {
-
-        const result = await db.query(query);
-
-        res.json({
-            iptu: result.rows
-        });
-
-    } catch (err: any) {
-
-        res.status(500).json({
-            error: err.message
-        });
-    }
-};
-
-
-export const getQRCodeOrCodBarras = async (
-    req: Request,
-    res: Response
-) => {
-
-    const tipo = req.query.tipo as string;
-
-
-    let codigoHtml = "";
-
-    if (tipo === "codigoDeBarras") {
-
-        codigoHtml =
-            `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=123456789" />`;
-
-    } else if (tipo === "qrcode") {
-
-        codigoHtml =
-            `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=QRCodeDemo" />`;
+    if (checkResult.rows.length > 0) {
+      return res.status(400).json({ success: false, erro: 'Este e-mail já está registado.' });
     }
 
-    res.send(`
-        <h2>Tipo selecionado: ${tipo}</h2>
-        ${codigoHtml}
-    `);
+    const insertQuery = 'INSERT INTO usuarios (nome, email, senha) VALUES ($1, $2, $3) RETURNING id, nome, email';
+    const result = await pool.query(insertQuery, [nome, email, password]);
+
+    return res.status(201).json({ success: true, user: result.rows[0] });
+  } catch (erro) {
+    console.error(erro);
+    return res.status(500).json({ success: false, erro: 'Erro ao registar utilizador' });
+  }
 };
 
+// ESTA É A FUNÇÃO QUE PROVAVELMENTE ESTAVA A FALTAR
+export const logoutUsuario = (req: Request, res: Response) => {
+  res.clearCookie('token');
+  res.clearCookie('XSRF-TOKEN');
+  return res.json({ success: true, mensagem: 'Logout realizado com sucesso' });
+};

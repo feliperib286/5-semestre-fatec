@@ -1,23 +1,25 @@
-import express from "express";
-import userRoutes from "./routes/usuarioRoutes";
-import commentRoutes from "./routes/comentarioRoutes";
-import hackerMalvadao from "./routes/hackerMalvadaoRoutes";
+import express from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import usuarioRoutes from './routes/usuarioRoutes';
+import { gerarTokenCSRF, validarCSRF } from './middlewares/csrfMiddleware';
 
 const app = express();
 
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true,
+}));
+
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
+// Rota para o frontend pegar o token CSRF
+app.get('/api/csrf-token', gerarTokenCSRF);
 
-const cookiesParser = require("cookie-parser");
-app.use(cookiesParser());
+// Esta linha já monta automaticamente o /usuario/login e /usuario/novo-login
+app.use('/usuario', usuarioRoutes);
 
-(global as any).segredoJwt = "Tnlmaslkcalsdfkalj0129iT";
-app.use("/usuario", userRoutes);
-app.use("/comentario", commentRoutes);
-app.use("/hacker-malvadao", hackerMalvadao);
-
-app.listen(3001, () => {
-    console.log("Servidor Vulnerável rodando na porta 3001");
+app.listen(3000, () => {
+  console.log('Servidor rodando na porta 3000');
 });
-
