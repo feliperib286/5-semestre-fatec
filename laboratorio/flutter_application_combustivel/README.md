@@ -1,17 +1,15 @@
-# flutter_application_1
+# Controle de Combustível - Atividade Substitutiva (Flutter)
 
-A new Flutter project.
+Projeto desenvolvido para a disciplina de Programação para Dispositivos Móveis II (Fatec), com o objetivo de registar abastecimentos, calcular consumo e gerir os gastos de um veículo.
 
-## Getting Started
+## 📱 Funcionalidades Implementadas
+- **Cadastro de Veículo e API:** Integração com a API pública (BrasilAPI / Parallelum FIPE) para carregar as listas reais de marcas e modelos de veículos.
+- **Registo de Abastecimentos:** Formulário para adicionar o tipo de combustível, preço por litro, litros abastecidos e quilometragem.
+- **Cálculo de Consumo:** A partir do segundo abastecimento, o sistema calcula automaticamente a distância percorrida, o consumo em km/L e o custo em R$/km.
+- **Dashboard e Gráficos:** Visualização dos indicadores matemáticos e renderização de um gráfico de linhas para acompanhar a evolução do consumo e do custo.
+- **Persistência Local e Exclusão:** Os dados do veículo e todo o histórico de abastecimentos ficam guardados no dispositivo de forma persistente. É possível excluir o veículo (e os seus registos) mediante confirmação.
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🚀 Instruções para executar o projeto
+1. Certifique-se de ter o [Flutter SDK](https://flutter.dev/docs/get-started/install) instalado.
+2. Clone este repositório:
+   ```bash
